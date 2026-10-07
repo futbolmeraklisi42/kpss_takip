@@ -53,9 +53,9 @@ if st.button("🔄 Seçili Siteleri Tara ve Güncelle", type="primary"):
 if 'ilanlar' in st.session_state and st.session_state['ilanlar']:
     df = pd.DataFrame(st.session_state['ilanlar'])
     
-    # Kelimeye göre filtrele
-    if arama_kelimesi:
-        df = df[df['Başlık'].str.contains(arama_kelimesi, case=False, na=False)]
+    # Kelimeye göre filtrele (Eğer arama kutusu doluysa filtrele)
+if arama_kelimesi.strip():
+    df = df[df['Başlık'].str.contains(arama_kelimesi.strip(), case=False, na=False)]
         
     st.markdown(f"### 📋 Güncel İlan Listesi ({len(df)} İlan)")
     
