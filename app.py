@@ -16,15 +16,19 @@ st.set_page_config(
 st.title("📌 KPSS Kamu Atama & İlan Takip Paneli")
 st.caption("Kariyer Kapısı, SBB Kamu İlan, ilan.gov.tr, Resmi Gazete ve İŞKUR ilanları")
 
+# Session state başlatma (Hafızayı koru)
+if 'raw_ilanlar' not in st.session_state:
+    st.session_state['raw_ilanlar'] = []
+
 # Yan Menü (Sidebar) - Filtreler
 st.sidebar.header("🔍 İlan Filtreleri")
 secilen_kaynaklar = st.sidebar.multiselect(
     "Takip Edilecek Kaynaklar:",
     ["Kamu İlan (SBB)", "ilan.gov.tr", "Resmi Gazete", "Kariyer Kapısı", "İŞKUR"],
-    default=["Kamu İlan (SBB)", "ilan.gov.tr", "Resmi Gazete"]
+    default=["Kamu İlan (SBB)", "ilan.gov.tr", "Resmi Gazete", "Kariyer Kapısı", "İŞKUR"]
 )
 
-arama_kelimesi = st.sidebar.text_input("Anahtar Kelime Ara (Örn: Büro, Mühendis, Temizlik, KPSS):")
+arama_kelimesi = st.sidebar.text_input("Anahtar Kelime Ara (Örn: Büro, Mühendis, Temizlik):")
 
 # Taramayı Başlat Butonu
 if st.button("🔄 Seçili Siteleri Tara ve Güncelle", type="primary"):
@@ -46,21 +50,23 @@ if st.button("🔄 Seçili Siteleri Tara ve Güncelle", type="primary"):
         if "İŞKUR" in secilen_kaynaklar:
             tum_ilanlar.extend(get_iskur_kamu_ilanlari())
             
-        st.session_state['ilanlar'] = tum_ilanlar
-        st.success(f"Tarama tamamlandı! Toplam {len(tum_ilanlar)} ilan bulundu.")
+        st.session_state['raw_ilanlar'] = tum_ilanlar
+        st.success(f"Tarama tamamlandı! Toplam {len(tum_ilanlar)} ilan çekildi.")
 
-# İlanları Ekrana Bas
-if 'ilanlar' in st.session_state and st.session_state['ilanlar']:
-    df = pd.DataFrame(st.session_state['ilanlar'])
+# Hafızadaki verileri göster
+ilanlar = st.session_state['raw_ilanlar']
+
+if ilanlar:
+    df = pd.DataFrame(ilanlar)
     
-    # Kelimeye göre filtrele (Eğer arama kutusu doluysa filtrele)
-if arama_kelimesi.strip():
-    df = df[df['Başlık'].str.contains(arama_kelimesi.strip(), case=False, na=False)]
+    # Arama filtresi uygula
+    if arama_kelimesi.strip():
+        df = df[df['Başlık'].str.contains(arama_kelimesi.strip(), case=False, na=False)]
         
-    st.markdown(f"### 📋 Güncel İlan Listesi ({len(df)} İlan)")
+    st.markdown(f"### 📋 Güncel İlan Listesi ({len(df)} İlan Gösteriliyor)")
     
-    if len(df) == 0:
-        st.warning("Arama kriterlerinize uygun ilan bulunamadı.")
+    if df.empty:
+        st.warning("Aradığınız kelimeye uygun ilan bulunamadı. Lütfen arama kutusunu temizleyin.")
     else:
         for idx, row in df.iterrows():
             with st.container():
@@ -75,4 +81,4 @@ if arama_kelimesi.strip():
                         st.link_button("İlana Git 🔗", row['Link'])
                 st.divider()
 else:
-    st.info("İlanları taramak için soldaki kaynakları seçip **'Seçili Siteleri Tara ve Güncelle'** butonuna tıklayın.")
+    st.info("İlanları listelemek için **'Seçili Siteleri Tara ve Güncelle'** butonuna tıklayın.")
